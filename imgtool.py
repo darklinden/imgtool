@@ -187,9 +187,17 @@ def deal_with_image(path, o, c):
             for ys in range(0, yn, y):
                 newImg.paste(img, (xs, ys))
     elif OperationTypeCenterWithSize == o:
-        xn, yn = str(c).split(",")
-        xn = int(xn)
-        yn = int(yn)
+        n = str(c).split(",")
+        if len(n) == 2:
+            xn = int(n[0])
+            yn = int(n[1])
+            xo = 0
+            yo = 0
+        elif len(n) == 4:
+            xn = int(n[0])
+            yn = int(n[1])
+            xo = int(n[2])
+            yo = int(n[3])
 
         if int(xn) == 0 or int(yn) == 0:
             print ("constants [" + c + "] is not valid, skipped.")
@@ -240,7 +248,7 @@ def deal_with_image(path, o, c):
         trueW = xRight - xLeft
         trueH = yTop - yBottom
 
-        newImg.paste(img, ((xn / 2) - (trueW / 2) - xLeft, (yn / 2) - (trueH / 2) - yBottom))
+        newImg.paste(img, ((xn / 2) - (trueW / 2) - xLeft + xo, (yn / 2) - (trueH / 2) - yBottom + yo))
 
         img = newImg
 
