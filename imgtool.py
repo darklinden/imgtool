@@ -10,22 +10,18 @@ import errno
 
 from PIL import Image
 
-OperationTypeSizeAdd = "sa"
-OperationTypeWidthAdd = "wa"
-OperationTypeHeightAdd = "ha"
+OperationTypeResizeTo = "st"
 OperationTypeSizeScale = "ss"
-OperationTypeWidthScale = "ws"
-OperationTypeHeightScale = "hs"
 OperationTypeLeftRotate = "lr"
 OperationTypeRightRotate = "rr"
 OperationTypeFlipX  = "fx"
 OperationTypeFlipY = "fy"
 OperationTypeRepeatTile = "rt"
-OperationTypeRepeatTileX = "rtx"
-OperationTypeRepeatTileY = "rty"
 OperationTypeCenterWithSize = "cs"
+OperationTypeAlphaColor = "ac"
 
 def run_cmd(cmd):
+
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
     if err:
@@ -33,6 +29,7 @@ def run_cmd(cmd):
     return out
 
 def self_install(file, des):
+
     file_path = os.path.realpath(file)
 
     filename = file_path
@@ -74,67 +71,32 @@ def deal_with_image(path, o, c):
         print ("file [" + path + "] is not valid image, skipped.")
         return
 
-    if OperationTypeSizeAdd == o:
-        if int(c) == 0:
+    if OperationTypeResizeTo == o:
+
+        n = str(c).split(",")
+
+        if len(n) != 2:
             print ("constants [" + c + "] is not valid, skipped.")
             return
 
-        x = img.size[0]
-        y = img.size[1]
-        x += int(c)
-        y += int(c)
+        x = int(n[0])
+        y = int(n[1])
         img = img.resize((x, y), Image.BILINEAR)
 
-    elif OperationTypeWidthAdd == o:
-        if int(c) == 0:
-            print ("constants [" + c + "] is not valid, skipped.")
-            return
-
-        x = img.size[0]
-        y = img.size[1]
-        x += int(c)
-        # y += int(c)
-        img = img.resize((x, y), Image.BILINEAR)
-    elif OperationTypeHeightAdd == o:
-        if int(c) == 0:
-            print ("constants [" + c + "] is not valid, skipped.")
-            return
-
-        x = img.size[0]
-        y = img.size[1]
-        # x += int(c)
-        y += int(c)
-        img = img.resize((x, y), Image.BILINEAR)
     elif OperationTypeSizeScale == o:
-        if int(c) == 0:
+        n = str(c).split(",")
+
+        if len(n) != 2:
             print ("constants [" + c + "] is not valid, skipped.")
             return
 
         x = img.size[0]
         y = img.size[1]
-        x *= float(c)
-        y *= float(c)
-        img = img.resize((int(x), int(y)), Image.BILINEAR)
-    elif OperationTypeWidthScale == o:
-        if int(c) == 0:
-            print ("constants [" + c + "] is not valid, skipped.")
-            return
+        x *= float(n[0])
+        y *= float(n[1])
 
-        x = img.size[0]
-        y = img.size[1]
-        x *= float(c)
-        # y *= float(c)
         img = img.resize((int(x), int(y)), Image.BILINEAR)
-    elif OperationTypeHeightScale == o:
-        if int(c) == 0:
-            print ("constants [" + c + "] is not valid, skipped.")
-            return
 
-        x = img.size[0]
-        y = img.size[1]
-        # x *= float(c)
-        y *= float(c)
-        img = img.resize((int(x), int(y)), Image.BILINEAR)
     elif OperationTypeLeftRotate == o:
         img = img.transpose(Image.ROTATE_270)
     elif OperationTypeRightRotate == o:
@@ -144,50 +106,27 @@ def deal_with_image(path, o, c):
     elif OperationTypeFlipY == o:
         img = img.transpose(Image.FLIP_TOP_BOTTOM)
     elif OperationTypeRepeatTile == o:
-        if int(c) == 0:
+
+        n = str(c).split(",")
+
+        if len(n) != 2:
             print ("constants [" + c + "] is not valid, skipped.")
             return
 
         x = img.size[0]
         y = img.size[1]
-        xn = x * int(c)
-        yn = y * int(c)
+        xn = x * int(n[0])
+        yn = y * int(n[1])
         newImg = Image.new('RGBA', (xn, yn), (0, 0, 0, 0))
         for xs in range(0, xn, x):
             for ys in range(0, yn, y):
                 newImg.paste(img, (xs, ys))
 
         img = newImg
-    elif OperationTypeRepeatTileX == o:
-        if int(c) == 0:
-            print ("constants [" + c + "] is not valid, skipped.")
-            return
 
-        x = img.size[0]
-        y = img.size[1]
-        xn = x * int(c)
-        yn = y # y * int(c)
-        newImg = Image.new('RGBA', (xn, yn), (0, 0, 0, 0))
-        for xs in range(0, xn, x):
-            for ys in range(0, yn, y):
-                newImg.paste(img, (xs, ys))
-
-        img = newImg
-    elif OperationTypeRepeatTileY == o:
-        if int(c) == 0:
-            print ("constants [" + c + "] is not valid, skipped.")
-            return
-
-        x = img.size[0]
-        y = img.size[1]
-        xn = x # x * int(c)
-        yn = y * int(c)
-        newImg = Image.new('RGBA', (xn, yn), (0, 0, 0, 0))
-        for xs in range(0, xn, x):
-            for ys in range(0, yn, y):
-                newImg.paste(img, (xs, ys))
     elif OperationTypeCenterWithSize == o:
         n = str(c).split(",")
+
         if len(n) == 2:
             xn = int(n[0])
             yn = int(n[1])
@@ -252,6 +191,45 @@ def deal_with_image(path, o, c):
 
         img = newImg
 
+    elif OperationTypeAlphaColor == o:
+
+        n = str(c).split(",")
+
+        if len(n) != 3 and len(n) != 4:
+            print ("constants [" + c + "] is not valid, skipped.")
+            return
+
+        r = int(n[0])
+        g = int(n[1])
+        b = int(n[2])
+        if len(n) == 4:
+            a = int(n[3])
+        else:
+            a = -1
+
+        x = img.size[0]
+        y = img.size[1]
+
+        newImg = Image.new('RGBA', (x, y), (0, 0, 0, 0))
+
+        rgb_img = img.convert('RGBA')
+
+        for x0 in range(0, x):
+            for y0 in range(0, y):
+                isTranparent = False
+                pix = rgb_img.getpixel((x0, y0))
+                if r == pix[0] and g == pix[1] and b == pix[2]:
+                    if a == -1:
+                        isTranparent = True
+                    elif a == pix[3]:
+                        isTranparent = True
+                if isTranparent:
+                    continue
+
+                newImg.putpixel((x0, y0), pix)
+
+        img = newImg
+
     img.save(path)
 
 def main():
@@ -283,20 +261,15 @@ def main():
 
     if _path == "" or _operation == "":
         print("using imgtool -f [file/folder path] -o [operation type] -c [constants value] to deal with image")
-        print("Operation SizeAdd = \"sa\"")
-        print("Operation WidthAdd = \"wa\"")
-        print("Operation HeightAdd = \"ha\"")
-        print("Operation SizeScale = \"ss\"")
-        print("Operation WidthScale = \"ws\"")
-        print("Operation HeightScale = \"hs\"")
+        print("Operation ResizeTo = \"st\" c = width,height ")
+        print("Operation SizeScale = \"ss\" c = xScale,yScale")
         print("Operation LeftRotate = \"lr\"")
         print("Operation RightRotate = \"rr\"")
         print("Operation FlipX = \"fx\"")
         print("Operation FlipY = \"fy\"")
-        print("Operation RepeatTileXY = \"rt\"")
-        print("Operation RepeatTileX = \"rtx\"")
-        print("Operation RepeatTileY = \"rty\"")
-        print("Operation CenterWithSize = \"cs\"")
+        print("Operation RepeatTileXY = \"rt\" c = xCount,yCount")
+        print("Operation CenterWithSize = \"cs\" c = width,height / width,height,xOffset,yOffset")
+        print("Operation AlphaColor = \"ac\" c = r,g,b / r,g,b,a")
 
         return
 
