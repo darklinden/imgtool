@@ -19,6 +19,7 @@ OperationTypeFlipY = "fy"
 OperationTypeRepeatTile = "rt"
 OperationTypeCenterWithSize = "cs"
 OperationTypeAlphaColor = "ac"
+OperationTypeGray = "gr"
 
 def run_cmd(cmd):
 
@@ -230,6 +231,35 @@ def deal_with_image(path, o, c):
 
         img = newImg
 
+    elif OperationTypeGray == o:
+
+        x = img.size[0]
+        y = img.size[1]
+
+        newImg = Image.new('RGBA', (x, y), (0, 0, 0, 0))
+
+        rgb_img = img.convert('RGBA')
+
+        red_lower_threshold = 150
+        green_blue_diff_threshold = 50
+
+        for x0 in range(0, x):
+            for y0 in range(0, y):
+                pix = rgb_img.getpixel((x0, y0))
+
+                red = pix[0]
+                green = pix[1]
+                blue = pix[2]
+                alpha = pix[3]
+
+                if (red > red_lower_threshold and abs(green - blue) < green_blue_diff_threshold):
+                    newImg.putpixel((x0, y0), pix)
+                else:
+                    avg = (red + green + blue) / 3
+                    newImg.putpixel((x0, y0), (int(avg), int(avg), int(avg), alpha))
+
+        img = newImg
+
     img.save(path)
 
 def main():
@@ -269,7 +299,8 @@ def main():
         print("Operation FlipY = \"fy\"")
         print("Operation RepeatTileXY = \"rt\" c = xCount,yCount")
         print("Operation CenterWithSize = \"cs\" c = width,height / width,height,xOffset,yOffset")
-        print("Operation AlphaColor = \"ac\" c = r,g,b / r,g,b,a")
+        print("Operation AlphaSelectColor = \"ac\" c = r,g,b / r,g,b,a")
+        print("Operation MakeGrayImage = \"gr\"")
 
         return
 
