@@ -252,11 +252,8 @@ def deal_with_image(path, o, c):
                 blue = pix[2]
                 alpha = pix[3]
 
-                if (red > red_lower_threshold and abs(green - blue) < green_blue_diff_threshold):
-                    newImg.putpixel((x0, y0), pix)
-                else:
-                    avg = (red + green + blue) / 3
-                    newImg.putpixel((x0, y0), (int(avg), int(avg), int(avg), alpha))
+                avg = (red + green + blue) / 3
+                newImg.putpixel((x0, y0), (int(avg), int(avg), int(avg), alpha))
 
         img = newImg
 
