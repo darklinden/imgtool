@@ -139,12 +139,6 @@ def deal_with_image(path, o, c):
             xo = int(n[2])
             yo = int(n[3])
 
-        if int(xn) == 0 or int(yn) == 0:
-            print ("constants [" + c + "] is not valid, skipped.")
-            return
-
-        newImg = Image.new('RGBA', (xn, yn), (0, 0, 0, 0))
-
         x = img.size[0]
         y = img.size[1]
         rgb_img = img.convert('RGBA')
@@ -187,6 +181,12 @@ def deal_with_image(path, o, c):
 
         trueW = xRight - xLeft
         trueH = yTop - yBottom
+
+        if int(xn) == 0 or int(yn) == 0:
+            xn = trueW
+            yn = trueH
+
+        newImg = Image.new('RGBA', (xn, yn), (0, 0, 0, 0))
 
         newImg.paste(img, ((xn / 2) - (trueW / 2) - xLeft + xo, (yn / 2) - (trueH / 2) - yBottom + yo))
 
