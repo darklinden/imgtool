@@ -19,6 +19,7 @@ OperationTypeFlipY = "fy"
 OperationTypeRepeatTile = "rt"
 OperationTypeCenterWithSize = "cs"
 OperationTypeAlphaColor = "ac"
+OperationTypeAlphaColorAbove = "acb"
 OperationTypeGray = "gr"
 
 def run_cmd(cmd):
@@ -231,6 +232,45 @@ def deal_with_image(path, o, c):
 
         img = newImg
 
+    elif OperationTypeAlphaColorAbove == o:
+
+        n = str(c).split(",")
+
+        if len(n) != 3 and len(n) != 4:
+            print ("constants [" + c + "] is not valid, skipped.")
+            return
+
+        r = int(n[0])
+        g = int(n[1])
+        b = int(n[2])
+        if len(n) == 4:
+            a = int(n[3])
+        else:
+            a = -1
+
+        x = img.size[0]
+        y = img.size[1]
+
+        newImg = Image.new('RGBA', (x, y), (0, 0, 0, 0))
+
+        rgb_img = img.convert('RGBA')
+
+        for x0 in range(0, x):
+            for y0 in range(0, y):
+                isTranparent = False
+                pix = rgb_img.getpixel((x0, y0))
+                if pix[0] >= r and pix[1] >= g and pix[2] >= b:
+                    if a == -1:
+                        isTranparent = True
+                    elif pix[3] <= a:
+                        isTranparent = True
+                if isTranparent:
+                    continue
+
+                newImg.putpixel((x0, y0), pix)
+
+        img = newImg
+
     elif OperationTypeGray == o:
 
         x = img.size[0]
@@ -297,6 +337,7 @@ def main():
         print("Operation RepeatTileXY = \"rt\" c = xCount,yCount")
         print("Operation CenterWithSize = \"cs\" c = width,height / width,height,xOffset,yOffset")
         print("Operation AlphaSelectColor = \"ac\" c = r,g,b / r,g,b,a")
+        print("Operation AlphaSelectColorAbove = \"acb\" c = r,g,b / r,g,b,a")
         print("Operation MakeGrayImage = \"gr\"")
 
         return
