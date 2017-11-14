@@ -7,6 +7,7 @@ import shutil
 import sys
 import datetime
 import errno
+import random
 
 from PIL import Image
 
@@ -14,24 +15,25 @@ OperationTypeResizeTo = "st"
 OperationTypeSizeScale = "ss"
 OperationTypeLeftRotate = "lr"
 OperationTypeRightRotate = "rr"
-OperationTypeFlipX  = "fx"
+OperationTypeFlipX = "fx"
 OperationTypeFlipY = "fy"
 OperationTypeRepeatTile = "rt"
 OperationTypeCenterWithSize = "cs"
 OperationTypeAlphaColor = "ac"
 OperationTypeAlphaColorAbove = "acb"
 OperationTypeGray = "gr"
+OperationTypeSplitCutTo = "sct"
+
 
 def run_cmd(cmd):
-
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
     if err:
         print(err)
     return out
 
-def self_install(file, des):
 
+def self_install(file, des):
     file_path = os.path.realpath(file)
 
     filename = file_path
@@ -53,18 +55,20 @@ def self_install(file, des):
     shutil.copy(file_path, to_path)
     run_cmd(['chmod', 'a+x', to_path])
 
+
 def time_str():
-    return str(datetime.datetime.now())
+    return str(datetime.datetime.now().microsecond)
 
 def mkdir_p(path):
     # print("mkdir_p: " + path)
     try:
         os.makedirs(path)
-    except OSError as exc:  # Python >2.5
+    except OSError as exc:  # Python > 2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else:
             raise
+
 
 def deal_with_image(path, o, c):
     try:
@@ -84,6 +88,7 @@ def deal_with_image(path, o, c):
         x = int(n[0])
         y = int(n[1])
         img = img.resize((x, y), Image.BILINEAR)
+        img.save(path)
 
     elif OperationTypeSizeScale == o:
         n = str(c).split(",")
@@ -98,15 +103,24 @@ def deal_with_image(path, o, c):
         y *= float(n[1])
 
         img = img.resize((int(x), int(y)), Image.BILINEAR)
+        img.save(path)
 
     elif OperationTypeLeftRotate == o:
         img = img.transpose(Image.ROTATE_270)
+        img.save(path)
+
     elif OperationTypeRightRotate == o:
         img = img.transpose(Image.ROTATE_90)
-    elif OperationTypeFlipX  == o:
+        img.save(path)
+
+    elif OperationTypeFlipX == o:
         img = img.transpose(Image.FLIP_LEFT_RIGHT)
+        img.save(path)
+
     elif OperationTypeFlipY == o:
         img = img.transpose(Image.FLIP_TOP_BOTTOM)
+        img.save(path)
+
     elif OperationTypeRepeatTile == o:
 
         n = str(c).split(",")
@@ -125,6 +139,7 @@ def deal_with_image(path, o, c):
                 newImg.paste(img, (xs, ys))
 
         img = newImg
+        img.save(path)
 
     elif OperationTypeCenterWithSize == o:
         n = str(c).split(",")
@@ -192,6 +207,7 @@ def deal_with_image(path, o, c):
         newImg.paste(img, ((xn / 2) - (trueW / 2) - xLeft + xo, (yn / 2) - (trueH / 2) - yBottom + yo))
 
         img = newImg
+        img.save(path)
 
     elif OperationTypeAlphaColor == o:
 
@@ -231,6 +247,7 @@ def deal_with_image(path, o, c):
                 newImg.putpixel((x0, y0), pix)
 
         img = newImg
+        img.save(path)
 
     elif OperationTypeAlphaColorAbove == o:
 
@@ -270,6 +287,7 @@ def deal_with_image(path, o, c):
                 newImg.putpixel((x0, y0), pix)
 
         img = newImg
+        img.save(path)
 
     elif OperationTypeGray == o:
 
@@ -279,9 +297,6 @@ def deal_with_image(path, o, c):
         newImg = Image.new('RGBA', (x, y), (0, 0, 0, 0))
 
         rgb_img = img.convert('RGBA')
-
-        red_lower_threshold = 150
-        green_blue_diff_threshold = 50
 
         for x0 in range(0, x):
             for y0 in range(0, y):
@@ -296,11 +311,44 @@ def deal_with_image(path, o, c):
                 newImg.putpixel((x0, y0), (int(avg), int(avg), int(avg), alpha))
 
         img = newImg
+        img.save(path)
 
-    img.save(path)
+    elif OperationTypeSplitCutTo == o:
+
+        n = str(c).split(",")
+
+        if len(n) != 4:
+            print ("constants [" + c + "] is not valid, skipped.")
+            return
+
+        x0 = int(n[0])
+        y0 = int(n[1])
+        x1 = int(n[2])
+        y1 = int(n[3])
+
+        x = img.size[0]
+        y = img.size[1]
+
+        sx = random.randint(x0, x1)
+        sy = random.randint(y0, y1)
+
+        ix = 0
+        iy = 0
+        while sy * iy < y:
+            while sx * ix < x:
+                one = img.crop((sx * ix, sy * iy, sx * (ix + 1), sy * (iy + 1)))
+
+                file_name, extension = os.path.splitext(path)
+                one_path = file_name + time_str() + extension
+                one.save(one_path)
+                ix += 1
+            ix = 0
+            iy += 1
+
+        os.remove(path)
+
 
 def main():
-
     # self_install
     if len(sys.argv) > 1 and sys.argv[1] == 'install':
         self_install("imgtool.py", "/usr/local/bin")
@@ -339,6 +387,7 @@ def main():
         print("Operation AlphaSelectColor = \"ac\" c = r,g,b / r,g,b,a")
         print("Operation AlphaSelectColorAbove = \"acb\" c = r,g,b / r,g,b,a")
         print("Operation MakeGrayImage = \"gr\"")
+        print("Operation SplitCutTo = \"sct\"")
 
         return
 
@@ -365,7 +414,8 @@ def main():
             for fn in sub_files:
                 file_path = root + "/" + fn
                 if os.path.isfile(file_path):
-                    if fn.lower().endswith(".png") or fn.lower().endswith(".jpg") or fn.lower().endswith(".gif") or fn.lower().endswith(".bmp") or fn.lower().endswith(".jpeg"):
+                    if fn.lower().endswith(".png") or fn.lower().endswith(".jpg") or fn.lower().endswith(
+                            ".gif") or fn.lower().endswith(".bmp") or fn.lower().endswith(".jpeg"):
                         deal_with_image(file_path, _operation, _constant)
 
 
