@@ -387,7 +387,7 @@ def main():
         print("Operation AlphaSelectColor = \"ac\" c = r,g,b / r,g,b,a")
         print("Operation AlphaSelectColorAbove = \"acb\" c = r,g,b / r,g,b,a")
         print("Operation MakeGrayImage = \"gr\"")
-        print("Operation SplitCutTo = \"sct\"")
+        print("Operation SplitCutTo = \"sct\" c = widthMin,heightMin,widthMax,heightMax")
 
         return
 
