@@ -321,16 +321,11 @@ def deal_with_image(path, o, c):
             print ("constants [" + c + "] is not valid, skipped.")
             return
 
-        x0 = int(n[0])
-        y0 = int(n[1])
-        x1 = int(n[2])
-        y1 = int(n[3])
+        sx = int(n[0])
+        sy = int(n[1])
 
         x = img.size[0]
         y = img.size[1]
-
-        sx = random.randint(x0, x1)
-        sy = random.randint(y0, y1)
 
         ix = 0
         iy = 0
@@ -387,7 +382,7 @@ def main():
         print("Operation AlphaSelectColor = \"ac\" c = r,g,b / r,g,b,a")
         print("Operation AlphaSelectColorAbove = \"acb\" c = r,g,b / r,g,b,a")
         print("Operation MakeGrayImage = \"gr\"")
-        print("Operation SplitCutTo = \"sct\" c = widthMin,heightMin,widthMax,heightMax")
+        print("Operation SplitCutTo = \"sct\" c = width,height")
 
         return
 
