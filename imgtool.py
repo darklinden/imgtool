@@ -317,7 +317,7 @@ def deal_with_image(path, o, c):
 
         n = str(c).split(",")
 
-        if len(n) != 4:
+        if len(n) != 2:
             print ("constants [" + c + "] is not valid, skipped.")
             return
 
