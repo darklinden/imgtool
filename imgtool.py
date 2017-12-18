@@ -7,7 +7,7 @@ import shutil
 import sys
 import datetime
 import errno
-import random
+import re
 
 from PIL import Image
 
@@ -23,7 +23,7 @@ OperationTypeAlphaColor = "ac"
 OperationTypeAlphaColorAbove = "acb"
 OperationTypeGray = "gr"
 OperationTypeSplitCutTo = "sct"
-
+OperationTypeStitchingPictures = "sp"
 
 def run_cmd(cmd):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -343,6 +343,17 @@ def deal_with_image(path, o, c):
         os.remove(path)
 
 
+def filename_compare(s0, s1):
+    b0 = os.path.basename(s0)
+    b1 = os.path.basename(s1)
+
+    non_decimal = re.compile(r'[^\d]')
+
+    n0 = non_decimal.sub('0', b0)
+    n1 = non_decimal.sub('0', b1)
+
+    return int(n0) - int(n1)
+
 def main():
     # self_install
     if len(sys.argv) > 1 and sys.argv[1] == 'install':
@@ -383,26 +394,22 @@ def main():
         print("Operation AlphaSelectColorAbove = \"acb\" c = r,g,b / r,g,b,a")
         print("Operation MakeGrayImage = \"gr\"")
         print("Operation SplitCutTo = \"sct\" c = width,height")
+        print("Operation StitchingPictures = \"sp\" c = [h: align width] / [v: align height]")
 
         return
 
     if not str(_path).startswith("/"):
         _path = os.path.join(os.getcwd(), _path)
 
-    if os.path.isfile(_path):
-        # back up
-        backup_folder = _path + "_backup_" + time_str()
-        mkdir_p(backup_folder)
-        shutil.copy(_path, os.path.join(backup_folder, os.path.basename(_path)))
+    if OperationTypeStitchingPictures == _operation:
 
-        # work
-        deal_with_image(_path, _operation, _constant)
-    elif os.path.isdir(_path):
-        # back up
-        backup_folder = _path + "_backup_" + time_str()
-        mkdir_p(backup_folder)
-        shutil.copytree(_path, os.path.join(backup_folder, os.path.basename(_path)))
+        if not os.path.isdir(_path):
+            print("Operation StitchingPictures need images in folder.")
+            return
 
+        images = []
+        width = 0
+        height = 0
         # work
         for root, dirs, files in os.walk(_path):
             sub_files = os.listdir(root)
@@ -411,7 +418,67 @@ def main():
                 if os.path.isfile(file_path):
                     if fn.lower().endswith(".png") or fn.lower().endswith(".jpg") or fn.lower().endswith(
                             ".gif") or fn.lower().endswith(".bmp") or fn.lower().endswith(".jpeg"):
-                        deal_with_image(file_path, _operation, _constant)
+                        images.append(file_path)
+                        try:
+                            img = Image.open(file_path)
+                            if _constant == "h":
+                                width += img.size[0]
+                                if height < img.size[1]:
+                                    height = img.size[1]
+                            elif _constant == "v":
+                                height += img.size[1]
+                                if width < img.size[0]:
+                                    width = img.size[0]
+                        except:
+                            print ("file [" + file_path + "] is not valid image, exit.")
+                            return
+
+        images.sort(cmp=filename_compare)
+
+        newImg = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+
+        i = 0
+        offset = 0
+        while i < len(images):
+            img = Image.open(images[i])
+            if _constant == "h":
+                newImg.paste(img, (offset, (height - img.size[1]) / 2))
+                offset += img.size[0]
+            elif _constant == "v":
+                newImg.paste(img, ((width - img.size[0]) / 2), offset)
+                offset += img.size[1]
+            i += 1
+
+        des_path = _path + "_sp.png"
+        if os.path.isfile(des_path):
+            os.remove(des_path)
+
+        newImg.save(des_path)
+
+    else:
+        if os.path.isfile(_path):
+            # back up
+            backup_folder = _path + "_backup_" + time_str()
+            mkdir_p(backup_folder)
+            shutil.copy(_path, os.path.join(backup_folder, os.path.basename(_path)))
+
+            # work
+            deal_with_image(_path, _operation, _constant)
+        elif os.path.isdir(_path):
+            # back up
+            backup_folder = _path + "_backup_" + time_str()
+            mkdir_p(backup_folder)
+            shutil.copytree(_path, os.path.join(backup_folder, os.path.basename(_path)))
+
+            # work
+            for root, dirs, files in os.walk(_path):
+                sub_files = os.listdir(root)
+                for fn in sub_files:
+                    file_path = root + "/" + fn
+                    if os.path.isfile(file_path):
+                        if fn.lower().endswith(".png") or fn.lower().endswith(".jpg") or fn.lower().endswith(
+                                ".gif") or fn.lower().endswith(".bmp") or fn.lower().endswith(".jpeg"):
+                            deal_with_image(file_path, _operation, _constant)
 
 
 if __name__ == "__main__":
