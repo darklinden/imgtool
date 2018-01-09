@@ -18,7 +18,9 @@ OperationTypeRightRotate = "rr"
 OperationTypeFlipX = "fx"
 OperationTypeFlipY = "fy"
 OperationTypeRepeatTile = "rt"
+OperationTypeAlphaCenterWithSize = "acs"
 OperationTypeCenterWithSize = "cs"
+OperationTypeMoveFromCenter = "mc"
 OperationTypeAlphaColor = "ac"
 OperationTypeAlphaColorAbove = "acb"
 OperationTypeGray = "gr"
@@ -68,7 +70,6 @@ def mkdir_p(path):
             pass
         else:
             raise
-
 
 def deal_with_image(path, o, c):
     try:
@@ -141,7 +142,7 @@ def deal_with_image(path, o, c):
         img = newImg
         img.save(path)
 
-    elif OperationTypeCenterWithSize == o:
+    elif OperationTypeAlphaCenterWithSize == o:
         n = str(c).split(",")
 
         if len(n) == 2:
@@ -208,6 +209,46 @@ def deal_with_image(path, o, c):
 
         img = newImg
         img.save(path)
+
+    elif OperationTypeCenterWithSize == o:
+        n = str(c).split(",")
+
+        if len(n) == 2:
+            xn = int(n[0])
+            yn = int(n[1])
+            xo = 0
+            yo = 0
+        elif len(n) == 4:
+            xn = int(n[0])
+            yn = int(n[1])
+            xo = int(n[2])
+            yo = int(n[3])
+
+        x = img.size[0]
+        y = img.size[1]
+
+        newImg = Image.new('RGBA', (xn, yn), (0, 0, 0, 0))
+
+        newImg.paste(img, ((xn / 2) - (x / 2) + xo, (yn / 2) - (y / 2) + yo))
+
+        img = newImg
+        img.save(path)
+
+    elif OperationTypeMoveFromCenter == o:
+        n = str(c).split(",")
+
+        if len(n) == 2:
+            xo = int(n[0])
+            yo = int(n[1])
+
+        x = img.size[0]
+        y = img.size[1]
+
+        newImg = Image.new('RGBA', (x, y), (0, 0, 0, 0))
+
+        newImg.paste(img, (xo, yo))
+
+        newImg.save(path)
 
     elif OperationTypeAlphaColor == o:
 
@@ -389,7 +430,9 @@ def main():
         print("Operation FlipX = \"fx\"")
         print("Operation FlipY = \"fy\"")
         print("Operation RepeatTileXY = \"rt\" c = xCount,yCount")
+        print("Operation AlphaCenterWithSize = \"acs\" c = width,height / width,height,xOffset,yOffset")
         print("Operation CenterWithSize = \"cs\" c = width,height / width,height,xOffset,yOffset")
+        print("Operation MoveFromCenter = \"mc\" c = xOffset,yOffset")
         print("Operation AlphaSelectColor = \"ac\" c = r,g,b / r,g,b,a")
         print("Operation AlphaSelectColorAbove = \"acb\" c = r,g,b / r,g,b,a")
         print("Operation MakeGrayImage = \"gr\"")
