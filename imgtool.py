@@ -8,6 +8,7 @@ import sys
 import datetime
 import errno
 import re
+import random
 
 from PIL import Image
 
@@ -26,6 +27,7 @@ OperationTypeAlphaColorAbove = "acb"
 OperationTypeGray = "gr"
 OperationTypeSplitCutTo = "sct"
 OperationTypeStitchingPictures = "sp"
+
 
 def run_cmd(cmd):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -61,6 +63,7 @@ def self_install(file, des):
 def time_str():
     return str(datetime.datetime.now().microsecond)
 
+
 def mkdir_p(path):
     # print("mkdir_p: " + path)
     try:
@@ -70,6 +73,7 @@ def mkdir_p(path):
             pass
         else:
             raise
+
 
 def deal_with_image(path, o, c):
     try:
@@ -358,12 +362,20 @@ def deal_with_image(path, o, c):
 
         n = str(c).split(",")
 
-        if len(n) != 2:
+        if len(n) == 4:
+            tmpX0 = int(n[0])
+            tmpX1 = int(n[1])
+            tmpY0 = int(n[2])
+            tmpY1 = int(n[3])
+
+            sx = random.randint(tmpX0, tmpX1)
+            sy = random.randint(tmpY0, tmpY1)
+        elif len(n) == 2:
+            sx = int(n[0])
+            sy = int(n[1])
+        else:
             print ("constants [" + c + "] is not valid, skipped.")
             return
-
-        sx = int(n[0])
-        sy = int(n[1])
 
         x = img.size[0]
         y = img.size[1]
@@ -394,6 +406,7 @@ def filename_compare(s0, s1):
     n1 = non_decimal.sub('0', b1)
 
     return int(n0) - int(n1)
+
 
 def main():
     # self_install
@@ -436,13 +449,16 @@ def main():
         print("Operation AlphaSelectColor = \"ac\" c = r,g,b / r,g,b,a")
         print("Operation AlphaSelectColorAbove = \"acb\" c = r,g,b / r,g,b,a")
         print("Operation MakeGrayImage = \"gr\"")
-        print("Operation SplitCutTo = \"sct\" c = width,height")
+        print("Operation SplitCutTo = \"sct\" c = width,height / RandomWidthMin,RandomWidthMax,RandomHeightMin,RandomHeightMax")
         print("Operation StitchingPictures = \"sp\" c = [h: align width] / [v: align height]")
 
         return
 
     if not str(_path).startswith("/"):
         _path = os.path.join(os.getcwd(), _path)
+
+    print (_path)
+    _path = _path.rstrip("/")
 
     if OperationTypeStitchingPictures == _operation:
 
