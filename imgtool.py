@@ -458,6 +458,8 @@ def deal_with_image(path, o, c):
             iy += 1
 
         os.remove(path)
+    else:
+        raise 'Unknown operation ' + o
 
 
 def filename_compare(s0, s1):
