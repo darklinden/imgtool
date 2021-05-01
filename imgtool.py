@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -211,7 +211,7 @@ def deal_with_image(path, o, c):
 
         newImg = Image.new('RGBA', (xn, yn), (0, 0, 0, 0))
 
-        newImg.paste(img, ((xn / 2) - (trueW / 2) - xLeft + xo, (yn / 2) - (trueH / 2) - yBottom + yo))
+        newImg.paste(img, (int(xn / 2) - int(trueW / 2) - xLeft + xo, int(yn / 2) - int(trueH / 2) - yBottom + yo))
 
         img = newImg
         img.save(path)
@@ -235,7 +235,7 @@ def deal_with_image(path, o, c):
 
         newImg = Image.new('RGBA', (xn, yn), (0, 0, 0, 0))
 
-        newImg.paste(img, ((xn / 2) - (x / 2) + xo, (yn / 2) - (y / 2) + yo))
+        newImg.paste(img, (int(xn / 2) - int(x / 2) + xo, int(yn / 2) - int(y / 2) + yo))
 
         img = newImg
         img.save(path)
